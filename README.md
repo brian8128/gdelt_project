@@ -9,8 +9,11 @@ DATA:
 http://stooq.com/db/h/ has 5 minute stock data from all over the world available for free from the past 30 days and hourly data going back 1 year.  Daily data goes back even further.  Here’s a sample from 2014 for Tofutti Brands Inc.
 
 Date,Time,Open,High,Low,Close,Volume,OpenInt
+
 2014-11-14,16:00:00,5.87,6.06,5.75,6.06,2600,0
+
 2014-11-14,17:00:00,6.16,6.18,6.16,6.18,1200,0
+
 2014-11-14,22:00:00,6.0,6.0,5.93,5.93,450,0
 
   WORLD EVENTS:
