@@ -26,14 +26,20 @@ def clean_series(s, min_timestamp=1433000000, min_mean_price_dollars=10):
     :param min_mean_price_dollars: return none if the mean price is less than this
     :return: The cleaned series or None if the series is rejected
     '''
-    pass
+    if s.mean() < min_mean_price_dollars:
+        return None
+
+    s = s[s.index > min_timestamp]
+    return s
 
 
-def get_df_from_files(limit=100,
+def get_series_list_from_files(limit=100,
                       download_month='201512',
                       freq='hourly',
                       region='us',
-                      market='nasdaq stocks'
+                      market='nasdaq stocks',
+                      min_timestamp=1433000000,
+                      min_mean_price_dollars=10
                       ):
 
     path = [PROJECT_HOME,
@@ -59,12 +65,17 @@ def get_df_from_files(limit=100,
                 df = pd.read_csv(path)
                 df['timestamp'] = (df['Date'] + 'T' + df['Time']).apply(get_timestamp)
                 df = df.set_index(['timestamp'])
+                # Add a new column with the correct name
                 df[symbol] = df.Open
-                series.append(df[symbol])
+                s = clean_series(df[symbol],
+                                 min_timestamp=min_timestamp,
+                                 min_mean_price_dollars=min_mean_price_dollars)
+                if s is not None:
+                    series.append(s)
+                    count += 1
             except Exception:
                 # It seems that this is rare.  Not part of MVP if important at all.
                 pass
-            count += 1
 
             # TODO: Guido says I should refactor this.  But how?
             if count >= limit:
@@ -72,4 +83,4 @@ def get_df_from_files(limit=100,
         if count >= limit:
             break;
 
-    return pd.DataFrame(data=series).T
+    return series
