@@ -19,7 +19,7 @@ def unzip():
     pass
 
 
-def clean_series(s, min_timestamp=1433000000, min_mean_price_dollars=10):
+def clean_series(s, min_timestamp=1433000000, min_mean_price_dollars=10, max_price_dollars=10000):
     '''
     :param s: the series to clean
     :param min_timestamp: cut off all values before this time
@@ -27,6 +27,9 @@ def clean_series(s, min_timestamp=1433000000, min_mean_price_dollars=10):
     :return: The cleaned series or None if the series is rejected
     '''
     if s.mean() < min_mean_price_dollars:
+        return None
+
+    if s.max() > max_price_dollars:
         return None
 
     s = s[s.index > min_timestamp]
