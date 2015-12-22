@@ -87,3 +87,37 @@ def get_series_list_from_files(limit=100,
             break;
 
     return series
+
+
+def get_ticker_price_df_from_file(variance_quantile_cutoff=0.97):
+    '''
+    Loads a dataframe of nasdaq ticker symbols from disk.
+    '''
+    # TODO: Decide one place to set the default limit.  Currently we have a default
+    # limit in two places.
+    s = get_series_list_from_files(limit=5000, min_mean_price_dollars=5)
+    df = pd.DataFrame(data=s).T
+    # Deal with missing values
+    df = df.interpolate().fillna(method='bfill')
+    return df
+
+
+def diff_df(df, variance_quantile_cutoff=0.97):
+    '''
+    Calculates a the percent change of each column of the data frame.
+    Performs clipping and removes the columns with the most variance.
+
+    variance_quantile_cutoff - Remove columns whose variance is higher than this.
+    For example if there are 100 columns and variance_quantile_cutoff is set to 0.97
+    this function will remove the 3 columns with the highest variance
+    If set to None no columns will be removed.
+    '''
+    dif_df = df.pct_change().clip(-2, 2).fillna(0.)
+    if variance_quantile_cutoff:
+        variance_cutoff = dif_df.var().quantile(variance_quantile_cutoff)
+        c = dif_df.columns[dif_df.var() < variance_cutoff]
+        dif_df = dif_df[c]
+    return dif_df
+
+
+
