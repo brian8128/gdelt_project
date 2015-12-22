@@ -15,15 +15,16 @@ class Model(object):
     factorization = None
     vocab = None
 
-    def fit(self, dif_df, company_df, vocab, n_components=7):
+    def fit(self, dif_df, company_df, vocab, n_components=7, max_iter=100):
         # Subsets the ticker_df to limit to what's also in the company_df
         self.n_components = n_components
         self.vocab = vocab
 
-        # We only want to use data that is present in both of our data frames
-        idx = company_df.index.intersection(dif_df.columns)
-        dif_df = dif_df.loc[:, idx]
-        self.company_df = company_df = company_df.loc[idx, :]
+        # # We only want to use data that is present in both of our data frames
+        # idx = company_df.index.intersection(dif_df.columns)
+        # dif_df = dif_df.loc[:, idx]
+        # self.company_df = company_df.loc[idx, :]
+        self.company_df = company_df
 
         # Get the data.  The first row of X is all zeros so drop it.
         X = dif_df.values[1:]
@@ -34,7 +35,7 @@ class Model(object):
         # We also want to test how many components are really there in the data
         # because we could generate as many components as we want but at some point
         # the components are just explaining random fluctuations in the data
-        self.factorization = SparsePCA(n_components=n_components, alpha=0.03)
+        self.factorization = SparsePCA(n_components=n_components, alpha=0.03, max_iter=max_iter)
         self.factorization.fit(X)
 
 
@@ -54,12 +55,12 @@ class Model(object):
         Note that this may not contain all the rows that were in the input comapny_df
         because we subset based on what data is also in the dif_df.
         '''
-        return self.get_company_df()
+        return self.get_company_df
 
     def get_vocab(self):
         return self.vocab
 
-    def get_component_info(self, component_df, n_companies=20, n_words=20):
+    def get_component_info(self, component, n_companies=20, n_words=20):
         '''
         component: 1d numpy array representing a linear combination of companies
         component_labels: the ticker symbols of the companies from component
@@ -81,31 +82,32 @@ class Model(object):
                     'word_importances_pro':
         '''
         d = {}
+
         idx_con = np.argsort(component)[:n_companies]
-        d['companies_con'] = component_labels[idx_con]
+        d['companies_con'] = self.company_df.index[idx_con]
         d['importances_con'] = component[idx_con] * -1.
 
         idx_pro = np.argsort(component)[::-1][:n_companies]
-        d['companies_pro'] = component_labels[idx_pro]
+        d['companies_pro'] = self.company_df.index[idx_pro]
         d['importances_pro'] = component[idx_pro]
 
-        # TODO: Weight the word importances by the company importance
-        word_importances_list_con = company_df.ix[d['companies_con'], :]['tfidf']
+        word_importances_list_con = self.company_df.ix[d['companies_con'], :]['tfidf']
         weighted_word_impt_list_con = word_importances_list_con.multiply(d['importances_con'], fill_value=0)
 
         word_importances_con = weighted_word_impt_list_con.mean()
         #word_importances_con = company_df.ix[d['companies_con'], :]['tfidf'].mean()
         word_idx_con = word_importances_con.argsort()[::-1][:n_words]
-        d['words_con'] = np.array(vocab)[word_idx_con]
+        d['words_con'] = np.array(self.vocab)[word_idx_con]
         d['word_importances_con'] = word_importances_con[word_idx_con]
 
-        word_importances_list_pro = company_df.ix[d['companies_pro'], :]['tfidf']
+        word_importances_list_pro = self.company_df.ix[d['companies_pro'], :]['tfidf']
         weighted_word_impt_list_pro = word_importances_list_pro.multiply(d['importances_pro'], fill_value=0)
 
         word_importances_pro = weighted_word_impt_list_pro.mean()
         #word_importances_pro = company_df.ix[d['companies_pro'], :]['tfidf'].mean()
         word_idx_pro = word_importances_pro.argsort()[::-1][:n_words]
-        d['words_pro'] = np.array(vocab)[word_idx_pro]
+        d['words_pro'] = np.array(self.vocab)[word_idx_pro]
         d['word_importances_pro'] = word_importances_pro[word_idx_pro]
 
         return d
+

@@ -95,7 +95,7 @@ def get_ticker_price_df_from_file(variance_quantile_cutoff=0.97):
     '''
     # TODO: Decide one place to set the default limit.  Currently we have a default
     # limit in two places.
-    s = get_series_list_from_files(limit=5000, min_mean_price_dollars=5)
+    s = get_series_list_from_files(limit=5000, min_mean_price_dollars=10)
     df = pd.DataFrame(data=s).T
     # Deal with missing values
     df = df.interpolate().fillna(method='bfill')
