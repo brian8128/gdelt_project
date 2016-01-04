@@ -3,14 +3,9 @@ import os
 import requests as r
 import pandas as pd
 import numpy as np
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from code.CONSTANTS import PROJECT_HOME, TICKER_FILE_PATH, DESCRIPTION_FILE_PATH
-
-# TODO: Factor both data_pipeline files into two files.
-# First file mananges raw data, second file cleans the raw data.
-# Currently we have raw data management mixed in with data cleaning
+from CONSTANTS import PROJECT_HOME, TICKER_FILE_PATH, DESCRIPTION_FILE_PATH
 
 
 def get_nasdaq_tickers():
@@ -113,21 +108,14 @@ def write_company_description_file(limit=100):
             df.write(t + '\t' + d + '\n')
 
 
-def get_company_df_from_file():
-    '''
-    :return: company_df - data frame with company info including tfidf of descriptsion,
-                features, - the vocabulary for the tfidf column of company_df
-    '''
-    # TODO: Factor this into three functions.
-    # it is doing three things, reading the data, cleaning it and tfidfing it.
+def get_company_description_df_and_feature_names(min_description_length=100):
+    # Load data about the companies
     with open(PROJECT_HOME + DESCRIPTION_FILE_PATH) as f:
         company_df = pd.read_csv(f,
                              sep='\t',
                              header=None)
     company_df.columns = ['ticker', 'description']
     company_df = company_df.dropna().set_index('ticker')
-    # Drop companies that don't have a good description
-    company_df = company_df[company_df.description.apply(lambda x: len(x) > 100)]
 
     tv = TfidfVectorizer(stop_words='english')
     tfidf = tv.fit_transform(company_df.description)
@@ -135,7 +123,11 @@ def get_company_df_from_file():
     # Change the 2d array to a list of 1d arrays
     tfidf = map(lambda x: x.flatten(), np.vsplit(tfidf.toarray(), tfidf.shape[0]))
     company_df['tfidf'] = tfidf
-    return company_df, features
+
+    # Throw out comapanies where we don't have a good description
+    company_df = company_df[company_df.description.apply(lambda x: len(x) >= min_description_length)]
+
+    return company_df, tv.get_feature_names()
 
 if __name__ == "__main__":
     write_company_description_file(limit=5000)

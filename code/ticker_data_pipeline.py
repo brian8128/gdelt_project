@@ -1,10 +1,10 @@
-from code.CONSTANTS import PROJECT_HOME
+from CONSTANTS import PROJECT_HOME
 
 import datetime
 import calendar
-import pandas as pd
 import os
 
+import pandas as pd
 
 def get_timestamp(s):
     '''
@@ -89,7 +89,7 @@ def get_series_list_from_files(limit=100,
     return series
 
 
-def get_ticker_price_df_from_file(variance_quantile_cutoff=0.97):
+def get_ticker_price_df_from_file():
     '''
     Loads a dataframe of nasdaq ticker symbols from disk.
     '''
@@ -102,7 +102,7 @@ def get_ticker_price_df_from_file(variance_quantile_cutoff=0.97):
     return df
 
 
-def diff_df(df, variance_quantile_cutoff=0.97):
+def diff_df(df, variance_quantile_cutoff=0.97, max=2):
     '''
     Calculates a the percent change of each column of the data frame.
     Performs clipping and removes the columns with the most variance.
@@ -111,13 +111,15 @@ def diff_df(df, variance_quantile_cutoff=0.97):
     For example if there are 100 columns and variance_quantile_cutoff is set to 0.97
     this function will remove the 3 columns with the highest variance
     If set to None no columns will be removed.
+    max - max percent change for any time interval.  We clip the data to be between -max and max
+    If set to None no clipping will transpire
     '''
-    dif_df = df.pct_change().clip(-2, 2).fillna(0.)
+
+    dif_df = df.pct_change().fillna(0.)
+    if max:
+        dif_df = dif_df.clip(-max, max)
     if variance_quantile_cutoff:
         variance_cutoff = dif_df.var().quantile(variance_quantile_cutoff)
         c = dif_df.columns[dif_df.var() < variance_cutoff]
         dif_df = dif_df[c]
     return dif_df
-
-
-
