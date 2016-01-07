@@ -7,10 +7,10 @@ import numpy as np
 class Model(object):
 
     def __init__(self, company_df, vocab, n_components=10):
-        self.n_components = n_components
+        self.n_components = n_components # 64 bits
         self.company_df = company_df
         self.vocab = vocab
-        self.factorization = None
+        self.factorization = None # 243K
         self.labels = None
 
     def fit(self, dif_df):

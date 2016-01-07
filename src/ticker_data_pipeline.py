@@ -1,10 +1,12 @@
-from CONSTANTS import PROJECT_HOME
+from CONSTANTS import PROJECT_HOME, TICKER_PICKLE_PATH
 
 import datetime
 import calendar
 import os
+from pickle_helper import pickle_, unpickle_
 
 import pandas as pd
+
 
 def get_timestamp(s):
     '''
@@ -89,7 +91,7 @@ def get_series_list_from_files(limit=100,
     return series
 
 
-def get_ticker_price_df_from_file():
+def create_ticker_price_df():
     '''
     Loads a dataframe of nasdaq ticker symbols from disk.
     '''
@@ -100,6 +102,20 @@ def get_ticker_price_df_from_file():
     # Deal with missing values
     df = df.interpolate().fillna(method='bfill')
     return df
+
+
+def pickle_ticker_price_df(ticker_price_df):
+    """
+    Convenience function for calling pickle_helper.pickle_()
+    """
+    return pickle_(ticker_price_df, TICKER_PICKLE_PATH)
+
+
+def unpickle_ticker_price_df():
+    """
+    Convenience function for calling pickle_helper.unpickle_()
+    """
+    return unpickle_(TICKER_PICKLE_PATH)
 
 
 def diff_df(df, variance_quantile_cutoff=0.97, max=2):
