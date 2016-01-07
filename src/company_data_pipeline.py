@@ -7,8 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from pickle_helper import pickle_, unpickle_
 
 
-from CONSTANTS import PROJECT_HOME, TICKER_FILE_PATH, DESCRIPTION_FILE_PATH, COMPANY_PICKLE_PATH, \
-    FEATURE_NAME_PICKLE_PATH
+from CONSTANTS import PROJECT_HOME, TICKER_FILE_PATH, DESCRIPTION_FILE_PATH
 
 
 def get_nasdaq_tickers():
@@ -120,42 +119,16 @@ def get_company_description_df_and_feature_names(min_description_length=100):
     company_df.columns = ['ticker', 'description']
     company_df = company_df.dropna().set_index('ticker')
 
-    tv = TfidfVectorizer(stop_words='english')
-    tfidf = tv.fit_transform(company_df.description)
-    # Change the 2d array to a list of 1d arrays
-    tfidf = map(lambda x: x.flatten(), np.vsplit(tfidf.toarray(), tfidf.shape[0]))
-    company_df['tfidf'] = tfidf
-
     # Throw out comapanies where we don't have a good description
     company_df = company_df[company_df.description.apply(lambda x: len(x) >= min_description_length)]
 
-    return company_df, tv.get_feature_names()
+    tv = TfidfVectorizer(stop_words='english')
+    tfidf = tv.fit_transform(company_df.description)
+    # Change the 2d array to a list of 1d arrays
+    # tfidf = map(lambda x: x.flatten(), np.vsplit(tfidf.toarray(), tfidf.shape[0]))
+    # company_df['tfidf'] = tfidf
 
-def pickle_company_df(company_df):
-    """
-    Convenience function for calling pickle_helper.pickle_()
-    """
-    return pickle_(company_df, COMPANY_PICKLE_PATH)
-
-
-def unpickle_company_df():
-    """
-    Convenience function for calling pickle_helper.unpickle_()
-    """
-    return unpickle_(COMPANY_PICKLE_PATH)
-
-def pickle_feature_names(feature_names):
-    """
-    Convenience function for calling pickle_helper.pickle_()
-    """
-    return pickle_(feature_names, FEATURE_NAME_PICKLE_PATH)
-
-
-def unpickle_feature_names():
-    """
-    Convenience function for calling pickle_helper.unpickle_()
-    """
-    return unpickle_(FEATURE_NAME_PICKLE_PATH)
+    return company_df, tfidf, tv.get_feature_names()
 
 if __name__ == "__main__":
     write_company_description_file(limit=5000)

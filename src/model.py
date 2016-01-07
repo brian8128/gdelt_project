@@ -6,9 +6,15 @@ import numpy as np
 
 class Model(object):
 
-    def __init__(self, company_df, vocab, n_components=10):
+    def __init__(self, company_df, tfidf, vocab, n_components=10):
+        """
+        We're keeping the company df and the tfidf separate because tfidf is sparse and we want to
+        pickle it sparse for massive savings in space and dump/load time.  This means the caller
+        is responsible that company_df and tfidf match up
+        """
         self.n_components = n_components # 64 bits
         self.company_df = company_df
+        self.tfidf = tfidf # Must match up with company df
         self.vocab = vocab
         self.factorization = None # 243K
         self.labels = None
@@ -52,10 +58,6 @@ class Model(object):
     def analyze_principle_component(self, component_num, n_companies=15, n_words=20):
         '''
         component: 1d numpy array representing a linear combination of companies
-        component_labels: the ticker symbols of the companies from component
-        company_df: pandas dataframe with index ticker symbols, a column 'description' with a
-                    text description of the company and a column 'tfidf' a tfidf vector
-        vocab: the vocab for the tfidf vector above
 
         returns: A dictionary with the following information about the company:
                     'companies_pro': Numpy array of ticker symbols of the top n_companies
@@ -74,6 +76,11 @@ class Model(object):
         component = self.factorization.components_[component_num]
         component_labels = self.labels
         company_df = self.company_df
+        # We need this here, so do it.  It's not so bad in memory, something about the way we do this
+        # doesn't work seem to work well with pickle
+        tfidf = map(lambda x: x.flatten(), np.vsplit(self.tfidf.toarray(), self.tfidf.shape[0]))
+        company_df['tfidf'] = tfidf
+
         vocab = self.vocab
 
         d = {}
