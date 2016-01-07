@@ -1,5 +1,5 @@
 from sklearn.decomposition import SparsePCA
-from sklearn.preprocessing import normalize
+import pandas as pd
 
 import numpy as np
 
@@ -21,35 +21,33 @@ class Model(object):
         self.factorization = factorization
 
     def transform(self, dif_df):
-        # TODO: Make sure dif_df has the right columns.  Maybe we can be flexible,
-        # but be sure to match up columns correctly and perhaps give a warning and fill
-        # in zeros if we have missing columns.  If there are extra columns we might be
-        # able to ignore that.
         '''
         From the fit function we have 'principle components' (vectors) c = [c_0, ..., c_{k-1}]
         which are stored in self.factorization.components_
         Given v, a vector representing one row of the ticker_df, we want to find (scalars) a = [a_0, ..., a_{k-1}]
         such that
                 e = sum(a_i * c_i) - v
-        is minimized.
-
-        To do this we set a_i = dot(v, c_i) / ||c_i||_2
+        is minimized.  The c_i are not orthogonal to each other though, so we can't just use projections.
+        Sklearn takes care of the math for us.
 
         :param dif_df:
-        :return:
+        :return: A data frame of the diffs 'projected' onto the 'principle compents'
         '''
 
-        # Matrix whose columns are normalized 'principle components'
-        c = np.matrix(normalize(self.factorization.components_).T)
+        # TODO: Make sure dif_df has the right columns.  Maybe we can be flexible,
+        # but be sure to match up columns correctly and perhaps give a warning and fill
+        # in zeros if we have missing columns.  If there are extra columns we might be
+        # able to ignore that.
+        X = dif_df.values
 
-        # Matrix whose rows are percent changes of all the stocks
-        v = np.matrix(dif_df.values)
+        a = self.factorization.transform(X)
 
-        # Matrix of the projections of the v's onto the c's telling for example, how well biotech did
-        # in a particular hour
-        a = v * c
+        # We may use the error term later
+        # error = np.dot(a, self.factorization.components_) - X
 
-        return a
+        pc_df = pd.DataFrame(a, index=dif_df.index, columns=["c{}".format(i) for i in range(self.n_components)])
+
+        return pc_df
 
     def analyze_principle_component(self, component_num, n_companies=15, n_words=20):
         '''
