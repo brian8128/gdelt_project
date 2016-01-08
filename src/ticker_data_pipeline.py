@@ -139,3 +139,31 @@ def diff_df(df, variance_quantile_cutoff=0.97, max=2):
         c = dif_df.columns[dif_df.var() < variance_cutoff]
         dif_df = dif_df[c]
     return dif_df
+
+
+def diff_from_start(df):
+    """
+    Returns the percent change from the first value in the series for each column.
+    So if we're given
+
+        a   b   c
+    1   10  20  10
+    2   11  21  10
+    3   12  22  15
+
+    we output
+
+        a   b   c
+    1   0   0   0
+    2   10  5   0
+    3   20  10  50
+
+    :param df: any data frame with numeric values
+    :return:
+    """
+    first_row = df.iloc[0]
+    copy = df.copy()
+    for i in range(len(copy.index)):
+        copy.iloc[i] = (copy.iloc[i] / first_row - 1) * 100.0
+    return copy
+

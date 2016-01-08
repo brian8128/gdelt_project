@@ -32,7 +32,7 @@ def create_barchart():
     df['percent_change'] = changes
     df['tickers'] = big_4_tickers
     p = Bar(df, label='tickers', values='percent_change',
-        title="Ticker Prices of Big 4 Tech Companies over the Past Hour",
+        title="Ticker Prices of 'Big 4' Tech Companies over the Past Hour",
         ylabel='% Change')
     return p
 

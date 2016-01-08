@@ -110,7 +110,7 @@ def write_company_description_file(limit=100):
             df.write(t + '\t' + d + '\n')
 
 
-def get_company_description_df_and_feature_names(min_description_length=100):
+def get_company_description_df_tfidf_and_feature_names(min_description_length=100):
     # Load data about the companies
     with open(PROJECT_HOME + DESCRIPTION_FILE_PATH) as f:
         company_df = pd.read_csv(f,
@@ -124,9 +124,6 @@ def get_company_description_df_and_feature_names(min_description_length=100):
 
     tv = TfidfVectorizer(stop_words='english')
     tfidf = tv.fit_transform(company_df.description)
-    # Change the 2d array to a list of 1d arrays
-    # tfidf = map(lambda x: x.flatten(), np.vsplit(tfidf.toarray(), tfidf.shape[0]))
-    # company_df['tfidf'] = tfidf
 
     return company_df, tfidf, tv.get_feature_names()
 

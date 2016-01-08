@@ -17,12 +17,12 @@ class Model(object):
         self.tfidf = tfidf # Must match up with company df
         self.vocab = vocab
         self.factorization = None # 243K
-        self.labels = None
+        self.ticker_symbols_used = None
 
     def fit(self, dif_df):
         factorization = SparsePCA(n_components=self.n_components, alpha=0.03)
         X = dif_df.values[1:]
-        self.labels = dif_df.columns.values
+        self.ticker_symbols_used = dif_df.columns.values
         factorization.fit(X)
         self.factorization = factorization
 
@@ -34,17 +34,16 @@ class Model(object):
         such that
                 e = sum(a_i * c_i) - v
         is minimized.  The c_i are not orthogonal to each other though, so we can't just use projections.
-        Sklearn takes care of the math for us.
+        sklearn takes care of the math for us.
 
         :param dif_df:
         :return: A data frame of the diffs 'projected' onto the 'principle compents'
         '''
 
-        # TODO: Make sure dif_df has the right columns.  Maybe we can be flexible,
-        # but be sure to match up columns correctly and perhaps give a warning and fill
-        # in zeros if we have missing columns.  If there are extra columns we might be
-        # able to ignore that.
-        X = dif_df.values
+        # TODO: Make sure dif_df has the right columns.
+        # Currently we restrict what we are given to what we are using but we don't have a concept
+        # of adding in zeros
+        X = dif_df[self.ticker_symbols_used].values
 
         a = self.factorization.transform(X)
 
@@ -74,7 +73,7 @@ class Model(object):
         '''
 
         component = self.factorization.components_[component_num]
-        component_labels = self.labels
+        component_labels = self.ticker_symbols_used
         company_df = self.company_df
         # We need this here, so do it.  It's not so bad in memory, something about the way we do this
         # doesn't work seem to work well with pickle
